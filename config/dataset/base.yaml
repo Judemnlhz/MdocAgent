@@ -3,8 +3,9 @@ top_k: 1
 use_baec: false
 baec_k_max: 4
 baec_rrf_c: 60
-baec_backup: true
+baec_output_path: ./results/${dataset.name}.baec_stage1.json
 baec_evidence_pages_one_based: true
+baec_debug_samples: 5
 question_key: question
 gt_key: answer
 page_id_key: page_ids

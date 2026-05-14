@@ -202,6 +202,14 @@ def merge_page_hints(selected_pages, ranked_pages, hinted_pages, k_max):
     return final_pages
 
 
+def page_hint_stats(hinted_pages, candidate_pool):
+    if not hinted_pages:
+        return False, []
+    candidate_set = set(candidate_pool)
+    outside_pool = sorted(page for page in hinted_pages if page not in candidate_set)
+    return True, outside_pool
+
+
 def merge_unique(*page_lists):
     merged = []
     for pages in page_lists:
@@ -329,11 +337,25 @@ def _build_baec_result(
     rrf_c,
     sample,
 ):
+    page_hint_applied, page_hint_outside_candidate_pool = page_hint_stats(page_hints, rrf_candidate_pool)
     return {
         "baec_task_type": task_type,
+        "baec_stage1": {
+            "stage": "stage1_page_selection",
+            "task_type_usage": "analysis_only",
+            "action": "SELECT_PAGES",
+            "page_hint_policy": "count_in_kmax",
+            "selected_pages": selected_pages,
+            "used_k": len(selected_pages),
+            "k_max": k_max,
+            "fusion_method": "RRF",
+            "adaptive_k_method": "largest_gap",
+            "page_hint_applied": page_hint_applied,
+            "page_hint_outside_candidate_pool": page_hint_outside_candidate_pool,
+        },
         "baec_controller": {
             "stage": "selection",
-            "action": "SELECT",
+            "action": "SELECT_PAGES",
             "evidence_status": "unverified",
             "final_answer": None,
             "preferred_modality": preferred_modality(task_type, sample),
@@ -362,10 +384,20 @@ def _build_baec_result(
             "score_gaps": score_gaps,
             "gap_index": gap_index,
             "page_hints": page_hints,
+            "page_hint_policy": "count_in_kmax",
+            "page_hint_applied": page_hint_applied,
+            "page_hint_outside_candidate_pool": page_hint_outside_candidate_pool,
             "score_components": score_components,
             "retriever_scores": {
                 "text": text_page_scores,
                 "image": image_page_scores,
             },
+        },
+        "baec_analysis": {
+            "task_type": task_type,
+            "task_type_usage": "analysis_only",
+            "preferred_modality": preferred_modality(task_type, sample),
+            "page_hint_applied": page_hint_applied,
+            "page_hint_outside_candidate_pool": page_hint_outside_candidate_pool,
         },
     }

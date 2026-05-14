@@ -22,6 +22,7 @@ class BaseDataset():
         self.EXTRACT_DOCUMENT_ID = lambda sample: re.sub("\\.pdf$", "", sample["doc_id"]).split("/")[-1] 
         current_time = datetime.now()
         self.time = current_time.strftime("%Y-%m-%d-%H-%M")
+        self._baec_debug_printed = 0
     
     def load_data(self, use_retreival=True):
         path = self.config.sample_path
@@ -78,9 +79,9 @@ class BaseDataset():
         texts = []
         images = []
         if self._use_baec_sample(sample):
-            selected_pages = sample["baec_trace"].get("selected_pages", [])
-            k_max = getattr(self.config, "baec_k_max", self.config.top_k)
-            for page in selected_pages[:k_max]:
+            selected_pages, used_k = self._get_baec_selected_pages(sample)
+            self._print_baec_debug(selected_pages, used_k)
+            for page in selected_pages:
                 try:
                     page = int(page)
                 except (TypeError, ValueError):
@@ -113,7 +114,26 @@ class BaseDataset():
         return question, texts, images
 
     def _use_baec_sample(self, sample):
-        return bool(getattr(self.config, "use_baec", False)) and "baec_trace" in sample
+        if not bool(getattr(self.config, "use_baec", False)):
+            return False
+        return "baec_stage1" in sample or "baec_trace" in sample
+
+    def _get_baec_selected_pages(self, sample):
+        stage1 = sample.get("baec_stage1") or {}
+        trace = sample.get("baec_trace") or {}
+        selected_pages = stage1.get("selected_pages")
+        if selected_pages is None:
+            selected_pages = trace.get("selected_pages", [])
+        used_k = stage1.get("used_k", trace.get("used_k", len(selected_pages)))
+        k_max = getattr(self.config, "baec_k_max", self.config.top_k)
+        return selected_pages[:k_max], used_k
+
+    def _print_baec_debug(self, selected_pages, used_k):
+        debug_limit = int(getattr(self.config, "baec_debug_samples", 0) or 0)
+        if self._baec_debug_printed >= debug_limit:
+            return
+        print(f"[BAEC] selected_pages={selected_pages}, used_k={used_k}")
+        self._baec_debug_printed += 1
     
     def load_full_data(self):
         samples = self.load_data(use_retreival=False)
