@@ -74,7 +74,7 @@ def update_evidence_stats(stats, sample, baec_result, one_based=True):
     if retriever_ranks:
         stats["before_rank_sum"] += min(retriever_ranks)
         stats["before_rank_count"] += 1
-    rrf_rank = min_rank(evidence_pages, trace.get("candidate_pool", []))
+    rrf_rank = min_rank(evidence_pages, trace.get("rrf_candidate_pool", []))
     if rrf_rank is not None:
         stats["rrf_rank_sum"] += rrf_rank
         stats["rrf_rank_count"] += 1
@@ -84,12 +84,20 @@ def average(total, count):
     return round(total / count, 6) if count else None
 
 
+def resolve_baec_output_path(cfg):
+    input_path = cfg.dataset.sample_with_retrieval_path
+    output_path = cfg.dataset.get("baec_output_path")
+    if output_path:
+        return output_path
+    if input_path.endswith(".json"):
+        return input_path[:-5] + ".baec_stage1.json"
+    return input_path + ".baec_stage1.json"
+
+
 @hydra.main(config_path="../config", config_name="base", version_base="1.2")
 def main(cfg):
     input_path = cfg.dataset.sample_with_retrieval_path
-    output_path = cfg.dataset.get("baec_output_path")
-    if not output_path:
-        raise ValueError("dataset.baec_output_path is required for Stage 1 output")
+    output_path = resolve_baec_output_path(cfg)
     if os.path.abspath(input_path) == os.path.abspath(output_path):
         raise ValueError(
             "dataset.baec_output_path must not be the same as "
@@ -135,7 +143,7 @@ def main(cfg):
         sample.update(baec_result)
 
         used_k = baec_result["baec_trace"]["used_k"]
-        task_type = baec_result["baec_task_type"]
+        task_type = baec_result["baec_analysis"]["task_type"]
         gap_index = baec_result["baec_trace"]["gap_index"]
         page_hint_applied_count += int(baec_result["baec_stage1"]["page_hint_applied"])
         page_hint_outside_candidate_pool_count += int(

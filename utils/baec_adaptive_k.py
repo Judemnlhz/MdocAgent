@@ -339,31 +339,23 @@ def _build_baec_result(
 ):
     page_hint_applied, page_hint_outside_candidate_pool = page_hint_stats(page_hints, rrf_candidate_pool)
     return {
-        "baec_task_type": task_type,
         "baec_stage1": {
-            "stage": "stage1_page_selection",
-            "task_type_usage": "analysis_only",
-            "action": "SELECT_PAGES",
-            "page_hint_policy": "count_in_kmax",
-            "selected_pages": selected_pages,
-            "used_k": len(selected_pages),
-            "k_max": k_max,
-            "fusion_method": "RRF",
-            "adaptive_k_method": "largest_gap",
-            "page_hint_applied": page_hint_applied,
-            "page_hint_outside_candidate_pool": page_hint_outside_candidate_pool,
-        },
-        "baec_controller": {
-            "stage": "selection",
+            "module": "Selection_Filter",
+            "stage": "page_selection",
             "action": "SELECT_PAGES",
             "evidence_status": "unverified",
-            "final_answer": None,
-            "preferred_modality": preferred_modality(task_type, sample),
-            "missing_info": None,
+            "fusion_method": "RRF",
+            "adaptive_k_method": "largest_gap",
+            "rrf_c": rrf_c,
+            "k_max": k_max,
+            "used_k": len(selected_pages),
+            "selected_pages": selected_pages,
+            "page_hint_policy": "count_in_kmax",
+            "page_hint_applied": page_hint_applied,
+            "page_hint_outside_candidate_pool": page_hint_outside_candidate_pool,
             "reason": (
                 "Stage 1 selects pages using RRF-based multimodal rank fusion and "
-                "Adaptive-k largest-gap cutoff. Evidence sufficiency, refusal, and "
-                "iterative retrieval are not executed yet."
+                "adaptive-k largest-gap cutoff only."
             ),
         },
         "baec_trace": {
@@ -376,8 +368,8 @@ def _build_baec_result(
             "used_k": len(selected_pages),
             "candidate_pool": candidate_pool,
             "rrf_candidate_pool": rrf_candidate_pool,
-            "need_retrieve_more": False,
-            "potential_need_retrieve_more": False,
+            "evidence_verification_executed": False,
+            "iterative_retrieval_executed": False,
             "text_pages_dedup": text_pages_dedup,
             "image_pages_dedup": image_pages_dedup,
             "rrf_scores": rrf_scores,
@@ -397,6 +389,7 @@ def _build_baec_result(
             "task_type": task_type,
             "task_type_usage": "analysis_only",
             "preferred_modality": preferred_modality(task_type, sample),
+            "preferred_modality_usage": "analysis_only",
             "page_hint_applied": page_hint_applied,
             "page_hint_outside_candidate_pool": page_hint_outside_candidate_pool,
         },
