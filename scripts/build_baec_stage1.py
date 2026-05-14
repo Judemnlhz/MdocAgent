@@ -74,7 +74,7 @@ def update_evidence_stats(stats, sample, baec_result, one_based=True):
     if retriever_ranks:
         stats["before_rank_sum"] += min(retriever_ranks)
         stats["before_rank_count"] += 1
-    rrf_rank = min_rank(evidence_pages, trace.get("rrf_candidate_pool", []))
+    rrf_rank = min_rank(evidence_pages, rrf_candidate_pool)
     if rrf_rank is not None:
         stats["rrf_rank_sum"] += rrf_rank
         stats["rrf_rank_count"] += 1
