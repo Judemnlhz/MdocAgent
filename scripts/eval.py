@@ -1,5 +1,10 @@
 import os
 import sys
+# --- 强制抹除潜伏代理的终极补丁 ---
+for k in ['http_proxy', 'https_proxy', 'all_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY']:
+    if k in os.environ:
+        del os.environ[k]
+# ----------------------------------
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from mydatasets.base_dataset import BaseDataset
 from agents.base_agent import Agent

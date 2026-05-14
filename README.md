@@ -92,24 +92,6 @@ To specify the top-4 retrieval candidates, use:
 python scripts/predict.py --config-name <dataset> run-name=<run-name> dataset.top_k=4
 ```
 
-### BAEC Stage 1: adaptive-k from the same top-10 pool
-
-Stage 1 keeps retrieval fixed at top-10 and only changes the evidence selection policy. It fuses text and image retrieval rankings with RRF, then automatically selects a dynamic number of pages up to `dataset.baec_k_max`.
-
-Build the adaptive-k fields after text and image retrieval have both written top-10 candidates:
-
-```bash
-python scripts/build_baec_stage1.py --config-name <dataset>
-```
-
-Run inference with the selected pages instead of a fixed top-1/top-4 slice:
-
-```bash
-python scripts/predict.py --config-name <dataset> run-name=<run-name> dataset.use_baec=true dataset.baec_k_max=4
-```
-
-For the fixed baselines, keep `dataset.use_baec=false` and set `dataset.top_k=1` or `dataset.top_k=4`.
-
 ## Evaluation
 
 1. Add your OpenAI API key in `config/model/openai.yaml`.

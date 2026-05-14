@@ -2,10 +2,11 @@ from models.base_model import BaseModel
 import torch
 import transformers
 
+
 class Llama3(BaseModel):
     def __init__(self, config):
         super().__init__(config)
-        
+
         self.create_ask_message = lambda question: {
             "role": "user",
             "content": question,
@@ -17,11 +18,11 @@ class Llama3(BaseModel):
         self.pipeline = transformers.pipeline(
             "text-generation",
             model=self.config.model_id,
-            model_kwargs={"torch_dtype": torch.bfloat16},
-            device=1,
+            model_kwargs={"torch_dtype": torch.float16},
+            device=2  # 关键修改：强行把整个 Llama 锁定在 cuda:1 (即你的物理 4 号卡)
         )
-    
-    def create_text_message(self, texts, question): 
+
+    def create_text_message(self, texts, question):
         prompt = ""
         for text in texts:
             prompt = prompt + text + '\n'
@@ -30,9 +31,9 @@ class Llama3(BaseModel):
             "content": f"{prompt}\n{question}",
         }
         return message
-    
+
     @torch.no_grad()
-    def predict(self, question, texts = None, images = None, history = None):
+    def predict(self, question, texts=None, images=None, history=None):
         self.clean_up()
         messages = self.process_message(question, texts, images, history)
         outputs = self.pipeline(
@@ -42,7 +43,7 @@ class Llama3(BaseModel):
         )
         self.clean_up()
         return outputs[0]["generated_text"][-1]['content'], outputs[0]["generated_text"]
-        
+
     def is_valid_history(self, history):
         if not isinstance(history, list):
             return False

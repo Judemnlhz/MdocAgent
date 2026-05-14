@@ -70,7 +70,6 @@ class MultiAgentSystem:
                     torch.cuda.empty_cache()
                 final_ans, final_messages = None, None
             sample[self.config.ans_key] = final_ans
-            self.save_verification_record(sample, final_messages)
             if self.config.save_message:
                 sample[self.config.ans_key+"_message"] = final_messages
             torch.cuda.empty_cache()
@@ -88,28 +87,3 @@ class MultiAgentSystem:
             agent.clean_messages()
         self.sum_agent.clean_messages()
 
-    def save_verification_record(self, sample, final_messages):
-        if not isinstance(final_messages, dict):
-            return
-        verification_record = final_messages.get("verification")
-        if not isinstance(verification_record, dict):
-            return
-        if not verification_record.get("enabled", False):
-            return
-
-        prefix = self.config.ans_key
-        decision = verification_record.get("decision", {})
-        if not isinstance(decision, dict):
-            decision = {}
-
-        sample[prefix + "_candidate"] = verification_record.get("candidate_answer")
-        sample[prefix + "_verified"] = verification_record.get("verified_answer")
-        sample[prefix + "_verification_action"] = decision.get(
-            "action",
-            verification_record.get("action"),
-        )
-        sample[prefix + "_verification_reason"] = decision.get(
-            "reason",
-            verification_record.get("reason"),
-        )
-        sample[prefix + "_question_type"] = verification_record.get("question_type")
